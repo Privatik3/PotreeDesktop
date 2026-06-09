@@ -1,7 +1,3 @@
 node_modules
 package-lock.json
 libs/Cesium
-
-# Local working documents (not shared upstream)
-docs/*
-!docs/.gitkeep
