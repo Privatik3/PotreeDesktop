@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Clean tool icon: an eraser sweeping a clip box. Monochrome to match
+     Potree's toolbar icons (libs/potree/resources/icons/*.svg). Referenced by
+     src/cleanup.js::installCleanButton. Replace freely with a nicer asset. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"
+     fill="none" stroke="#e8e8e8" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <!-- dashed clip box being cleared -->
+  <rect x="4" y="4" width="16" height="16" stroke-dasharray="3 3" opacity="0.6"/>
+  <!-- eraser body -->
+  <path d="M14 26 L24 16 L29 21 L19 31 L14 31 Z" fill="#e8e8e8" stroke="#e8e8e8"/>
+  <!-- eraser seam -->
+  <path d="M21 19 L26 24" stroke="#2b2b2b" stroke-width="1.5"/>
+  <!-- sweep marks -->
+  <path d="M6 27 H12 M5 31 H11" opacity="0.7"/>
+</svg>

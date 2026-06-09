@@ -246,6 +246,16 @@ export function convert_20(inputPaths, chosenPath, pointcloudName){
 	converter.on('exit', (code) => {
 		console.log(`child process exited with code ${code}`);
 
+		// Cleanup feature: register the ORIGINAL source .las with the backend so
+		// clip-zone cleaning can run later. Defensive call (cleanup.js exposes
+		// window.qazCleanup); currently a safe no-op stub. See src/cleanup.js.
+		try {
+			window.qazCleanup?.registerSource?.(inputPaths[0], {
+				name: pointcloudName,
+				convertedDir: chosenPath,
+			});
+		} catch (e) { console.warn("[cleanup] registerSource hook failed", e); }
+
 		const cloudJS = `${chosenPath}/metadata.json`;
 		console.log("now loading point cloud: " + cloudJS);
 

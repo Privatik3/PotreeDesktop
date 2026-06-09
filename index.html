@@ -143,13 +143,16 @@
 		<script type="module">
 
 		import {
-			loadDroppedPointcloud, 
-			createPlaceholder, 
-			convert_17, 
-			convert_20, 
+			loadDroppedPointcloud,
+			createPlaceholder,
+			convert_17,
+			convert_20,
 			doConversion,
 			dragEnter, dragOver, dragLeave, dropHandler,
 		} from "./src/desktop.js";
+
+		// Cleanup feature (see src/cleanup.js + docs/CLEANUP_TOOL.md).
+		import { installCleanButton } from "./src/cleanup.js";
 
 		{
 			// open links in the standard browser instead of electron
@@ -189,6 +192,10 @@
 			$("#menu_scene").next().show();
 			$("#menu_filters").next().show();
 			viewer.toggleSidebar();
+
+			// Add the "Clean" button to the Clipping toolbar. Must run after the
+			// sidebar exists (i.e. here, inside loadGUI). See src/cleanup.js.
+			installCleanButton();
 
 
 			// let section = $(`
