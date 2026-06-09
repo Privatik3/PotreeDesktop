@@ -109,9 +109,12 @@ Guard → `POST /pointclouds/{id}/clean` with `{ boxes, pointcloudOffset }` →
 on success `resetScene()` → `convert_20([cleanedLasPath], <dir>, name+"_cleaned")`.
 `convert_20` already spawns PotreeConverter and loads the result into the viewer,
 so you get the cleaned cloud on screen for free. Reference code is in the JSDoc.
-- **Iterate-again decision (document your choice):** after re-convert, either
-  re-register `cleaned.las` so the user can clean repeatedly, or treat it as a
-  single pass for v1. The reference notes where to add the re-registration.
+- **Iteration is automatic:** `convert_20`'s `exit` handler calls
+  `registerSource(inputPaths[0])`. When you re-convert `cleaned.las`, that hook
+  re-registers it as a new backend session, so `currentSession` now points at the
+  cleaned file and the user can draw fresh boxes and Clean again immediately —
+  no extra code needed. (This is also why registration in §4.2 is the single
+  ingest point: it fires for both the first drop and every cleaned reload.)
 
 ---
 

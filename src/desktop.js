@@ -149,6 +149,16 @@ export function convert_17(inputPaths, chosenPath, pointcloudName){
 	converter.on('close', (code) => {
 		console.log(`child process exited with code ${code}`);
 
+		// Cleanup feature: register the ORIGINAL source .las with the backend
+		// (same hook as convert_20, so ingest works for either converter version).
+		// Safe no-op stub today. See src/cleanup.js.
+		try {
+			window.qazCleanup?.registerSource?.(inputPaths[0], {
+				name: pointcloudName,
+				convertedDir: chosenPath,
+			});
+		} catch (e) { console.warn("[cleanup] registerSource hook failed", e); }
+
 		const cloudJS = `${chosenPath}/cloud.js`;
 		console.log("now loading point cloud: " + cloudJS);
 

@@ -77,9 +77,12 @@ export async function backendHealth() {
  * returned id in `currentSession`. SAFE NO-OP until implemented so the drop →
  * convert pipeline keeps working.
  *
- * Called from: src/desktop.js, after a successful .las conversion
- *              (convert_20's `close`/`exit` handler) and from
- *              loadDroppedPointcloud() when a raw .las is loaded.
+ * Called from: src/desktop.js, in the converter completion handlers
+ *              (convert_20's `exit` AND convert_17's `close`) — the single
+ *              registration point, covering BOTH cases automatically:
+ *                (a) the user's initial .las drop (either converter version), and
+ *                (b) the re-conversion of cleaned.las after a Clean (iteration).
+ *              You do not need to call this from anywhere else.
  *
  * @param {string} lasPath      absolute path of the source .las
  * @param {Object} [opts]
@@ -211,9 +214,11 @@ export function resetScene() {
  *   const dir = np.join(np.dirname(cleaned), `${currentSession.name || "cloud"}_cleaned_converted`);
  *   convert_20([cleaned], dir, `${currentSession.name || "cloud"}_cleaned`);
  *
- *   // NOTE: after re-convert you may want to re-register the cleaned .las so the
- *   // user can iterate (clean again). Call registerSource(cleaned, {...}) in the
- *   // convert completion path, or leave single-pass for v1 (document the choice).
+ *   // ITERATION IS AUTOMATIC: convert_20's exit handler calls
+ *   // window.qazCleanup.registerSource(inputPaths[0]=cleaned), so after the
+ *   // reload `currentSession` points at the cleaned file (a NEW backend session/
+ *   // id). The user can immediately draw new boxes and click Clean again. You do
+ *   // NOT need to re-register here. (See desktop.js convert_20 exit handler.)
  */
 export async function cleanPointCloud() {
 	throw new Error("TODO: implement cleanPointCloud() — see JSDoc + docs/CLEANUP_TOOL.md");
