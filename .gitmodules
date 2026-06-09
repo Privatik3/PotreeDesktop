@@ -1,0 +1,3 @@
+[submodule "potree"]
+	path = potree
+	url = https://github.com/Privatik3/potree.git
