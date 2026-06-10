@@ -17,13 +17,6 @@
  *   - window.Potree : the Potree namespace (from libs/potree/potree.js)
  *
  * ---------------------------------------------------------------------------
- * STATUS: DOCUMENTED STUBS. Signatures, wiring points, and the exact reference
- * implementation for each function live in the JSDoc / inline comments below
- * and in docs/CLEANUP_TOOL.md. Bodies are intentionally NOT implemented:
- * functions called during normal app use (registerSource, installCleanButton)
- * are SAFE NO-OPS that log a TODO so the existing app keeps working; functions
- * only reachable once you wire the button throw so you notice they're pending.
- *
  * Contract reference (do not diverge): ../../API_CONTRACT.md  (root repo)
  * Architecture / coordinate system:    ../../ARCHITECTURE.md  (root repo)
  * ---------------------------------------------------------------------------
@@ -59,23 +52,21 @@ export function getCurrentSession() {
  * Ping the backend. Call before registering so you can warn the user early if
  * the backend isn't running.
  * @returns {Promise<boolean>} true if GET /health returned {status:"ok"}.
- *
- * REFERENCE IMPLEMENTATION (fill in):
- *   try {
- *     const r = await fetch(`${BACKEND_URL}/health`);
- *     if (!r.ok) return false;
- *     const j = await r.json();
- *     return j.status === "ok";
- *   } catch (_) { return false; }
  */
 export async function backendHealth() {
-	throw new Error("TODO: implement backendHealth() — see JSDoc + docs/CLEANUP_TOOL.md");
+	try {
+		const r = await fetch(`${BACKEND_URL}/health`);
+		if (!r.ok) return false;
+		const j = await r.json();
+		return j.status === "ok";
+	} catch (_) {
+		return false;
+	}
 }
 
 /**
  * Register a dropped .las with the backend (POST /pointclouds). Stores the
- * returned id in `currentSession`. SAFE NO-OP until implemented so the drop →
- * convert pipeline keeps working.
+ * returned id in `currentSession`.
  *
  * Called from: src/desktop.js, in the converter completion handlers
  *              (convert_20's `exit` AND convert_17's `close`) — the single
@@ -89,23 +80,37 @@ export async function backendHealth() {
  * @param {string} [opts.name]          base name for later re-conversion
  * @param {string} [opts.convertedDir]  folder the local converter wrote into
  * @returns {Promise<CleanupSession|null>}
- *
- * REFERENCE IMPLEMENTATION (fill in):
- *   const res = await fetch(`${BACKEND_URL}/pointclouds`, {
- *     method: "POST",
- *     headers: { "Content-Type": "application/json" },
- *     body: JSON.stringify({ lasPath }),
- *   });
- *   if (!res.ok) { viewer.postError(`Backend register failed: ${res.status}`); return null; }
- *   const { id } = await res.json();
- *   currentSession = { id, lasPath, name: opts.name ?? "", convertedDir: opts.convertedDir ?? "" };
- *   viewer.postMessage(`Registered with cleanup backend (session ${id.slice(0,8)}…)`, { duration: 4000 });
- *   return currentSession;
  */
 export async function registerSource(lasPath, opts = {}) {
-	// SAFE NO-OP: do not break the drop pipeline while unimplemented.
-	console.warn("[cleanup] registerSource() is a stub — TODO. lasPath:", lasPath, opts);
-	return null;
+	const viewer = window.viewer;
+	if (!(await backendHealth())) {
+		viewer?.postError?.(
+			"Cleanup backend is not running. Start it with backend/run.ps1."
+		);
+		return null;
+	}
+
+	const res = await fetch(`${BACKEND_URL}/pointclouds`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ lasPath }),
+	});
+	if (!res.ok) {
+		viewer?.postError?.(`Backend register failed: ${res.status}`);
+		return null;
+	}
+	const { id } = await res.json();
+	currentSession = {
+		id,
+		lasPath,
+		name: opts.name ?? "",
+		convertedDir: opts.convertedDir ?? "",
+	};
+	viewer?.postMessage?.(
+		`Registered with cleanup backend (session ${id.slice(0, 8)}…)`,
+		{ duration: 4000 }
+	);
+	return currentSession;
 }
 
 // ---------------------------------------------------------------------------
@@ -122,33 +127,32 @@ export async function registerSource(lasPath, opts = {}) {
  * system" for why matrixWorld is already in LAS coordinates.
  *
  * @returns {{type:("box"|"sphere"), worldToLocal:number[]}[]}
- *
- * REFERENCE IMPLEMENTATION (fill in):
- *   const out = [];
- *   for (const v of viewer.scene.volumes) {
- *     if (v.clip !== true) continue;
- *     v.updateMatrixWorld(true);                       // ensure fresh transform
- *     const inv = v.matrixWorld.clone().invert();      // world -> local
- *     const type = (v.constructor && v.constructor.name === "SphereVolume") ? "sphere" : "box";
- *     out.push({ type, worldToLocal: inv.elements.slice() }); // 16 floats, column-major
- *   }
- *   return out;
  */
 export function collectClipVolumes() {
-	throw new Error("TODO: implement collectClipVolumes() — see JSDoc + docs/CLEANUP_TOOL.md");
+	const viewer = window.viewer;
+	const out = [];
+	for (const v of viewer.scene.volumes) {
+		if (v.clip !== true) continue;
+		v.updateMatrixWorld(true);
+		const inv = v.matrixWorld.clone().invert();
+		const type =
+			v.constructor && v.constructor.name === "SphereVolume"
+				? "sphere"
+				: "box";
+		out.push({ type, worldToLocal: inv.elements.slice() });
+	}
+	return out;
 }
 
 /**
  * pointcloud.position [x,y,z] of the first loaded cloud, sent to the backend
  * for debug/validation only (the backend does not require it).
  * @returns {number[]|null}
- *
- * REFERENCE IMPLEMENTATION (fill in):
- *   const pc = viewer.scene.pointclouds[0];
- *   return pc ? [pc.position.x, pc.position.y, pc.position.z] : null;
  */
 export function pointcloudOffset() {
-	throw new Error("TODO: implement pointcloudOffset() — see JSDoc");
+	const viewer = window.viewer;
+	const pc = viewer.scene.pointclouds[0];
+	return pc ? [pc.position.x, pc.position.y, pc.position.z] : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -161,20 +165,15 @@ export function pointcloudOffset() {
  * so the point clouds are removed manually.
  *
  * @returns {void}
- *
- * REFERENCE IMPLEMENTATION (fill in):
- *   // point clouds
- *   while (viewer.scene.pointclouds.length > 0) {
- *     const pc = viewer.scene.pointclouds[0];
- *     viewer.scene.scenePointCloud.remove(pc);
- *     viewer.scene.pointclouds.splice(0, 1);
- *   }
- *   // clip volumes (+ polygon clip volumes)
- *   viewer.scene.removeAllClipVolumes();
- *   // optional: viewer.scene.removeAllMeasurements();
  */
 export function resetScene() {
-	throw new Error("TODO: implement resetScene() — see JSDoc + docs/CLEANUP_TOOL.md");
+	const viewer = window.viewer;
+	while (viewer.scene.pointclouds.length > 0) {
+		const pc = viewer.scene.pointclouds[0];
+		viewer.scene.scenePointCloud.remove(pc);
+		viewer.scene.pointclouds.splice(0, 1);
+	}
+	viewer.scene.removeAllClipVolumes();
 }
 
 // ---------------------------------------------------------------------------
@@ -186,42 +185,60 @@ export function resetScene() {
  *   guard -> POST /clean -> resetScene() -> convert_20(cleanedLas) -> reload.
  *
  * @returns {Promise<void>}
- *
- * REFERENCE IMPLEMENTATION (fill in — see docs/CLEANUP_TOOL.md "Clean flow"):
- *   if (!currentSession) { viewer.postError("No cloud registered with the backend yet."); return; }
- *   const boxes = collectClipVolumes();
- *   if (boxes.length === 0) { viewer.postMessage("Add at least one clip volume first.", {duration:4000}); return; }
- *
- *   viewer.postMessage("Cleaning… sending clip zones to backend.", {duration: 10000});
- *   let result;
- *   try {
- *     const res = await fetch(`${BACKEND_URL}/pointclouds/${currentSession.id}/clean`, {
- *       method: "POST",
- *       headers: { "Content-Type": "application/json" },
- *       body: JSON.stringify({ boxes, pointcloudOffset: pointcloudOffset() }),
- *     });
- *     if (!res.ok) { viewer.postError(`Clean failed: ${res.status} ${await res.text()}`); return; }
- *     result = await res.json();   // { cleanedLasPath, removed, kept }
- *   } catch (e) { viewer.postError(`Clean request error: ${e.message}`); return; }
- *
- *   viewer.postMessage(`Removed ${result.removed} pts. Reloading cleaned cloud…`, {duration: 8000});
- *   resetScene();
- *
- *   // Re-convert the cleaned .las with the existing pipeline. Pick a target dir
- *   // next to the cleaned file; convert_20 loads it into the viewer on finish.
- *   const np = require("path");
- *   const cleaned = result.cleanedLasPath;
- *   const dir = np.join(np.dirname(cleaned), `${currentSession.name || "cloud"}_cleaned_converted`);
- *   convert_20([cleaned], dir, `${currentSession.name || "cloud"}_cleaned`);
- *
- *   // ITERATION IS AUTOMATIC: convert_20's exit handler calls
- *   // window.qazCleanup.registerSource(inputPaths[0]=cleaned), so after the
- *   // reload `currentSession` points at the cleaned file (a NEW backend session/
- *   // id). The user can immediately draw new boxes and click Clean again. You do
- *   // NOT need to re-register here. (See desktop.js convert_20 exit handler.)
  */
 export async function cleanPointCloud() {
-	throw new Error("TODO: implement cleanPointCloud() — see JSDoc + docs/CLEANUP_TOOL.md");
+	const viewer = window.viewer;
+	if (!currentSession) {
+		viewer.postError("No cloud registered with the backend yet.");
+		return;
+	}
+	const boxes = collectClipVolumes();
+	if (boxes.length === 0) {
+		viewer.postMessage("Add at least one clip volume first.", {
+			duration: 4000,
+		});
+		return;
+	}
+
+	viewer.postMessage("Cleaning… sending clip zones to backend.", {
+		duration: 10000,
+	});
+	let result;
+	try {
+		const res = await fetch(
+			`${BACKEND_URL}/pointclouds/${currentSession.id}/clean`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					boxes,
+					pointcloudOffset: pointcloudOffset(),
+				}),
+			}
+		);
+		if (!res.ok) {
+			viewer.postError(`Clean failed: ${res.status} ${await res.text()}`);
+			return;
+		}
+		result = await res.json();
+	} catch (e) {
+		viewer.postError(`Clean request error: ${e.message}`);
+		return;
+	}
+
+	viewer.postMessage(
+		`Removed ${result.removed} pts. Reloading cleaned cloud…`,
+		{ duration: 8000 }
+	);
+	resetScene();
+
+	const np = require("path");
+	const cleaned = result.cleanedLasPath;
+	const dir = np.join(
+		np.dirname(cleaned),
+		`${currentSession.name || "cloud"}_cleaned_converted`
+	);
+	convert_20([cleaned], dir, `${currentSession.name || "cloud"}_cleaned`);
 }
 
 // ---------------------------------------------------------------------------
@@ -237,24 +254,21 @@ export async function cleanPointCloud() {
  * "remove all" X — the empty slot highlighted in the design screenshot). To put
  * it before the X instead, use `.children().last().before(btn)`.
  *
- * SAFE NO-OP until implemented (so loadGUI doesn't error).
- *
  * @returns {void}
- *
- * REFERENCE IMPLEMENTATION (fill in):
- *   const bar = $("#clipping_tools");
- *   if (bar.length === 0) { console.warn("[cleanup] #clipping_tools not found yet"); return; }
- *   if ($("#clean_tool_button").length > 0) return;            // idempotent
- *   const icon = "./src/icons/clean.svg";                       // app-level asset (this repo)
- *   const btn = $(`<img id="clean_tool_button" src="${icon}"
- *                   title="Clean: delete points inside clip zones"
- *                   style="width:32px;height:32px" class="button-icon" />`);
- *   btn.click(() => cleanPointCloud());
- *   bar.append(btn);                                            // end of toolbar
  */
 export function installCleanButton() {
-	// SAFE NO-OP: do not break viewer.loadGUI() while unimplemented.
-	console.warn("[cleanup] installCleanButton() is a stub — TODO (see docs/CLEANUP_TOOL.md)");
+	const bar = $("#clipping_tools");
+	if (bar.length === 0) {
+		console.warn("[cleanup] #clipping_tools not found yet");
+		return;
+	}
+	if ($("#clean_tool_button").length > 0) return;
+	const icon = "./src/icons/clean.svg";
+	const btn = $(`<img id="clean_tool_button" src="${icon}"
+                  title="Clean: delete points inside clip zones"
+                  style="width:32px;height:32px" class="button-icon" />`);
+	btn.click(() => cleanPointCloud());
+	bar.append(btn);
 }
 
 // ---------------------------------------------------------------------------
