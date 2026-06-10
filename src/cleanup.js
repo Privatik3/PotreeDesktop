@@ -106,10 +106,6 @@ export async function registerSource(lasPath, opts = {}) {
 		name: opts.name ?? "",
 		convertedDir: opts.convertedDir ?? "",
 	};
-	viewer?.postMessage?.(
-		`Registered with cleanup backend (session ${id.slice(0, 8)}…)`,
-		{ duration: 4000 }
-	);
 	return currentSession;
 }
 
@@ -194,15 +190,10 @@ export async function cleanPointCloud() {
 	}
 	const boxes = collectClipVolumes();
 	if (boxes.length === 0) {
-		viewer.postMessage("Add at least one clip volume first.", {
-			duration: 4000,
-		});
+		viewer.postError("Add at least one clip volume first.");
 		return;
 	}
 
-	viewer.postMessage("Cleaning… sending clip zones to backend.", {
-		duration: 10000,
-	});
 	let result;
 	try {
 		const res = await fetch(
@@ -226,10 +217,6 @@ export async function cleanPointCloud() {
 		return;
 	}
 
-	viewer.postMessage(
-		`Removed ${result.removed} pts. Reloading cleaned cloud…`,
-		{ duration: 8000 }
-	);
 	resetScene();
 
 	const np = require("path");

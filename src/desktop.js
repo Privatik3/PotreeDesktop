@@ -75,11 +75,6 @@ export function createPlaceholder(aabb){
 
 
 export function convert_17(inputPaths, chosenPath, pointcloudName){
-	let message = `Starting conversion.<br>
-	input: ${inputPaths}<br>
-	output: ${chosenPath}`;
-	viewer.postMessage(message, {duration: 15000});
-
 	const { spawn } = require('child_process');
 
 	let exe = './libs/PotreeConverter/PotreeConverter.exe';
@@ -166,9 +161,6 @@ export function convert_17(inputPaths, chosenPath, pointcloudName){
 			placeholder.remove();
 		}
 
-		let message = `conversion finished, now loading ${cloudJS}`;
-		viewer.postMessage(message, {duration: 15000});
-
 		Potree.loadPointCloud(cloudJS, pointcloudName, function(e){
 			viewer.scene.addPointCloud(e.pointcloud);
 
@@ -182,11 +174,6 @@ export function convert_17(inputPaths, chosenPath, pointcloudName){
 }
 
 export function convert_20(inputPaths, chosenPath, pointcloudName){
-	let message = `Starting conversion.<br>
-	input: ${inputPaths}<br>
-	output: ${chosenPath}`;
-	viewer.postMessage(message, {duration: 15000});
-
 	const { spawn, fork, execFile } = require('child_process');
 
 	let exe = './libs/PotreeConverter2/PotreeConverter.exe';
@@ -272,9 +259,6 @@ export function convert_20(inputPaths, chosenPath, pointcloudName){
 		if(placeholder){
 			placeholder.remove();
 		}
-
-		let message = `conversion finished, now loading ${cloudJS}`;
-		viewer.postMessage(message, {duration: 15000});
 
 		Potree.loadPointCloud(cloudJS).then(e => {
 			let pointcloud = e.pointcloud;
